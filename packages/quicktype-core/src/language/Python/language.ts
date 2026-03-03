@@ -22,6 +22,8 @@ import { PythonRenderer } from "./PythonRenderer";
 export interface PythonFeatures {
     dataClasses: boolean;
     typeHints: boolean;
+    nativeTypes?: boolean;
+    matchStatements?: boolean;
 }
 
 export const pythonOptions = {
@@ -32,8 +34,21 @@ export const pythonOptions = {
             "3.5": { typeHints: false, dataClasses: false },
             "3.6": { typeHints: true, dataClasses: false },
             "3.7": { typeHints: true, dataClasses: true },
+            "3.9": { typeHints: true, dataClasses: true, nativeTypes: true },
+            "3.10": {
+                typeHints: true,
+                dataClasses: true,
+                nativeTypes: true,
+                matchStatements: true,
+            },
+            "3.11": {
+                typeHints: true,
+                dataClasses: true,
+                nativeTypes: true,
+                matchStatements: true,
+            },
         },
-        "3.6",
+        "3.10",
     ),
     justTypes: new BooleanOption("just-types", "Classes only", false),
     nicePropertyNames: new BooleanOption(

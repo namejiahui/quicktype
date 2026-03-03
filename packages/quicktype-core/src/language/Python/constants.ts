@@ -13,6 +13,10 @@ export const forbiddenTypeNames = [
     "TypeVar",
     "T",
     "EnumT",
+    "list",
+    "dict",
+    "set",
+    "tuple",
 ] as const;
 
 export const forbiddenPropertyNames = [

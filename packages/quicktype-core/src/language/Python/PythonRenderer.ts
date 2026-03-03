@@ -32,7 +32,7 @@ import {
 } from "../../Type/TypeUtils";
 
 import { forbiddenPropertyNames, forbiddenTypeNames } from "./constants";
-import type { pythonOptions } from "./language";
+import type { PythonFeatures, pythonOptions } from "./language";
 import { classNameStyle, snakeNameStyle } from "./utils";
 
 export class PythonRenderer extends ConvenienceRenderer {
@@ -141,7 +141,30 @@ export class PythonRenderer extends ConvenienceRenderer {
     }
 
     protected withTyping(name: string): Sourcelike {
+        const features = this.pyOptions.features as PythonFeatures;
+        if (features.nativeTypes === true) {
+            switch (name) {
+                case "List":
+                    return "list";
+                case "Dict":
+                    return "dict";
+                case "Set":
+                    return "set";
+                case "Tuple":
+                    return "tuple";
+            }
+        }
         return this.withImport("typing", name);
+    }
+
+    protected useNativeTypes(): boolean {
+        const features = this.pyOptions.features as PythonFeatures;
+        return features.nativeTypes === true;
+    }
+
+    protected useMatchStatements(): boolean {
+        const features = this.pyOptions.features as PythonFeatures;
+        return features.matchStatements === true;
     }
 
     protected namedType(t: Type): Sourcelike {
@@ -161,19 +184,21 @@ export class PythonRenderer extends ConvenienceRenderer {
             (_integerType) => "int",
             (_doubletype) => "float",
             (_stringType) => "str",
-            (arrayType) => [
-                this.withTyping("List"),
-                "[",
-                this.pythonType(arrayType.items),
-                "]",
-            ],
+            (arrayType) => {
+                const itemType = this.pythonType(arrayType.items);
+                if (this.useNativeTypes()) {
+                    return ["list[", itemType, "]"];
+                }
+                return [this.withTyping("List"), "[", itemType, "]"];
+            },
             (classType) => this.namedType(classType),
-            (mapType) => [
-                this.withTyping("Dict"),
-                "[str, ",
-                this.pythonType(mapType.values),
-                "]",
-            ],
+            (mapType) => {
+                const valueType = this.pythonType(mapType.values);
+                if (this.useNativeTypes()) {
+                    return ["dict[str, ", valueType, "]"];
+                }
+                return [this.withTyping("Dict"), "[str, ", valueType, "]"];
+            },
             (enumType) => this.namedType(enumType),
             (unionType) => {
                 const [hasNull, nonNulls] = removeNullFromUnion(unionType);
@@ -189,13 +214,18 @@ export class PythonRenderer extends ConvenienceRenderer {
                             this.pyOptions.pydanticBaseModel) &&
                         _isRootTypeDef
                     ) {
-                        // Only push "= None" if this is a root level type def
-                        //   otherwise we may get type defs like List[Optional[int] = None]
-                        //   which are invalid
                         rest.push(" = None");
                     }
 
                     if (nonNulls.size > 1) {
+                        if (this.useNativeTypes()) {
+                            return [
+                                "(",
+                                arrayIntercalate(" | ", memberTypes),
+                                ") | None",
+                                ...rest,
+                            ];
+                        }
                         this.withImport("typing", "Union");
                         return [
                             this.withTyping("Optional"),
@@ -206,15 +236,22 @@ export class PythonRenderer extends ConvenienceRenderer {
                         ];
                     }
 
+                    const memberType = defined(iterableFirst(memberTypes));
+                    if (this.useNativeTypes()) {
+                        return [memberType, " | None", ...rest];
+                    }
                     return [
                         this.withTyping("Optional"),
                         "[",
-                        defined(iterableFirst(memberTypes)),
+                        memberType,
                         "]",
                         ...rest,
                     ];
                 }
 
+                if (this.useNativeTypes()) {
+                    return arrayIntercalate(" | ", memberTypes);
+                }
                 return [
                     this.withTyping("Union"),
                     "[",

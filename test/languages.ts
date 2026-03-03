@@ -222,6 +222,29 @@ export const PythonLanguage: Language = {
     sourceFiles: ["src/language/Python/index.ts"],
 };
 
+export const PythonLanguage39: Language = {
+    ...PythonLanguage,
+    name: "python",
+    base: "test/fixtures/python39",
+    quickTestRendererOptions: [{ "python-version": "3.9" }],
+};
+
+export const PythonLanguage310: Language = {
+    ...PythonLanguage,
+    name: "python",
+    base: "test/fixtures/python310",
+    compileCommand: "mypy --python-version 3.10 quicktype.py",
+    quickTestRendererOptions: [{ "python-version": "3.10" }],
+};
+
+export const PythonLanguage311: Language = {
+    ...PythonLanguage,
+    name: "python",
+    base: "test/fixtures/python311",
+    compileCommand: "mypy --python-version 3.11 quicktype.py",
+    quickTestRendererOptions: [{ "python-version": "3.11" }],
+};
+
 export const RustLanguage: Language = {
     name: "rust",
     base: "test/fixtures/rust",

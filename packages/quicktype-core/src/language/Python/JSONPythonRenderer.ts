@@ -362,6 +362,9 @@ export class JSONPythonRenderer extends PythonRenderer {
 
     protected emitListConverter(): void {
         const tvar = this.typeVar();
+        const listType = this.useNativeTypes()
+            ? `list[${tvar}]`
+            : `${this.withTyping("List")}[${tvar}]`;
         this.emitBlock(
             [
                 "def from_list(f",
@@ -377,7 +380,7 @@ export class JSONPythonRenderer extends PythonRenderer {
                 ", ",
                 this.typingDecl("x", "Any"),
                 ")",
-                this.typeHint(" -> ", this.withTyping("List"), "[", tvar, "]"),
+                this.typeHint(" -> ", listType),
                 ":",
             ],
             () => {
@@ -389,6 +392,7 @@ export class JSONPythonRenderer extends PythonRenderer {
 
     protected emitToClassConverter(): void {
         const tvar = this.typeVar();
+        const dictType = this.useNativeTypes() ? "dict" : this.withTyping("Dict");
         this.emitBlock(
             [
                 "def to_class(c",
@@ -396,7 +400,7 @@ export class JSONPythonRenderer extends PythonRenderer {
                 ", ",
                 this.typingDecl("x", "Any"),
                 ")",
-                this.typeHint(" -> dict"),
+                this.typeHint(" -> ", dictType),
                 ":",
             ],
             () => {
@@ -412,6 +416,9 @@ export class JSONPythonRenderer extends PythonRenderer {
 
     protected emitDictConverter(): void {
         const tvar = this.typeVar();
+        const dictType = this.useNativeTypes()
+            ? `dict[str, ${tvar}]`
+            : `${this.withTyping("Dict")}[str, ${tvar}]`;
         this.emitBlock(
             [
                 "def from_dict(f",
@@ -427,13 +434,7 @@ export class JSONPythonRenderer extends PythonRenderer {
                 ", ",
                 this.typingDecl("x", "Any"),
                 ")",
-                this.typeHint(
-                    " -> ",
-                    this.withTyping("Dict"),
-                    "[str, ",
-                    tvar,
-                    "]",
-                ),
+                this.typeHint(" -> ", dictType),
                 ":",
             ],
             () => {
